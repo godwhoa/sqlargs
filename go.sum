@@ -1,0 +1,4 @@
+github.com/lfittl/pg_query_go v0.0.0-20180518170915-169e80957094 h1:iS3dzpXGhrWkJ27wOxZyJtCNn9XSIlIhXxdS6ryIUm8=
+github.com/lfittl/pg_query_go v0.0.0-20180518170915-169e80957094/go.mod h1:ukRSNHGFZcSb9/WLyuUvSqrPzS09BScEYL5nbIovKqA=
+golang.org/x/tools v0.0.0-20190110015856-aa033095749b h1:G5tsw1T5VA7PD7VmXyGtX/hQp3ABPSCPRKVfsdUcVxs=
+golang.org/x/tools v0.0.0-20190110015856-aa033095749b/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
