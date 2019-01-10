@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/constant"
 	"go/types"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -85,12 +86,30 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
+// contains checks if a string is in a string slice
+func contains(needle string, hay []string) bool {
+	for _, h := range hay {
+		if h == needle {
+			return true
+		}
+	}
+	return false
+}
+
+var validFuncs = []string{
+	"Exec", "QueryRow", "Query", "ExecContext", "QueryRowContext", "QueryContext",
+	"MustExec", "Queryx", "QueryRowx", "NamedQuery", "NamedExec", "QueryxContext",
+	"QueryRowxContext", "NamedQueryContext", "NamedExecContext",
+}
+
+var validPackages = []string{"database/sql", "github.com/jmoiron/sqlx"}
+
+var validTypeNames = []string{"DB", "Tx", "Stmt", "NamedStmt"}
+
 func isProperSelExpr(sel *ast.SelectorExpr, typesInfo *types.Info) bool {
 	// Only accept function calls for Exec, QueryRow and Query
 	fnName := sel.Sel.Name
-	if fnName != "Exec" &&
-		fnName != "QueryRow" &&
-		fnName != "Query" {
+	if !contains(fnName, validFuncs) {
 		return false
 	}
 	// Get the type info of X of the selector.
@@ -103,13 +122,26 @@ func isProperSelExpr(sel *ast.SelectorExpr, typesInfo *types.Info) bool {
 		return false
 	}
 	n := ptr.Elem().(*types.Named)
-	if n.Obj().Pkg().Path() != "database/sql" {
+	// remove vendor path prefix
+	// eg. github.com/godwhoa/upboat/vendor/<pkg> -> <pkg>
+	pkgPath := stripVendor(n.Obj().Pkg().Path())
+	if !contains(pkgPath, validPackages) {
 		return false
 	}
 	name := n.Obj().Name()
-	// Only accept sql.DB, sql.Tx or sql.Stmt types.
-	if name != "DB" && name != "Tx" && name != "Stmt" {
+	// Only accept sql.DB, sql.Tx, sql.Stmt types.
+	if !contains(name, validTypeNames) {
 		return false
 	}
 	return true
+}
+
+// stripVendor strips out the vendor path prefix
+func stripVendor(pkgPath string) string {
+	idx := strings.LastIndex(pkgPath, "vendor/")
+	if idx < 0 {
+		return pkgPath
+	}
+	// len("vendor/") == 7
+	return pkgPath[idx+7:]
 }
