@@ -1,6 +1,7 @@
 package sqlargs
 
 import (
+	"errors"
 	"go/ast"
 	"go/constant"
 	"go/types"
@@ -65,7 +66,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		// Now that we are inside the SelectorExpr, we need to verify 2 things -
 		// 1. The function name is Exec, Query or QueryRow; because that is what we are interested in.
 		// 2. The type of the selector is sql.DB, sql.Tx or sql.Stmt.
-		// TODO: Also do the Context couterparts.
 		if !isProperSelExpr(sel, pass.TypesInfo) {
 			return
 		}
@@ -75,15 +75,31 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		arg0 := call.Args[0]
-		typ, ok := pass.TypesInfo.Types[arg0]
-		if !ok || typ.Value == nil {
+		sql, args, err := extractSQL(call.Args, pass.TypesInfo.Types)
+		if err != nil {
 			return
 		}
-		analyzeQuery(constant.StringVal(typ.Value), call, pass)
+
+		analyzeQuery(sql, args, call, pass)
 	})
 
 	return nil, nil
+}
+
+// extractSQL extracts the SQL statement and args
+func extractSQL(args []ast.Expr, types map[ast.Expr]types.TypeAndValue) (string, []ast.Expr, error) {
+	for i, arg := range args {
+		tv, ok := types[arg]
+		if !ok || tv.Value == nil {
+			continue
+		}
+		// we assume first string type arg is going to be the sql statement
+		// and everything after it as sql args
+		if tv.Type.String() == "string" {
+			return constant.StringVal(tv.Value), args[i+1:], nil
+		}
+	}
+	return "", []ast.Expr{}, errors.New("No SQL statement found")
 }
 
 // contains checks if a string is in a string slice

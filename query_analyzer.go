@@ -8,7 +8,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-func analyzeQuery(query string, call *ast.CallExpr, pass *analysis.Pass) {
+func analyzeQuery(query string, args []ast.Expr, call *ast.CallExpr, pass *analysis.Pass) {
 	tree, err := pg_query.Parse(query)
 	if err != nil {
 		pass.Reportf(call.Lparen, "Invalid query: %v", err)
@@ -41,13 +41,13 @@ func analyzeQuery(query string, call *ast.CallExpr, pass *analysis.Pass) {
 			pass.Reportf(call.Lparen, "No. of columns (%d) not equal to no. of values (%d)", numCols, numValues)
 		}
 		numParams := numParams(selStmt.ValuesLists[0])
-		args := len(call.Args[1:])
+		argLen := len(args)
 		// A safe check is to just check if args are less than no. of params. If this is true,
 		// then there has to be an error somewhere. On the contrary, if there are less params
 		// found than args, then it just means we haven't parsed the query well enough and there are
 		// other parts of the query which use the other arguments.
-		if args < numParams {
-			pass.Reportf(call.Lparen, "No. of args (%d) is less than no. of params (%d)", args, numParams)
+		if argLen < numParams {
+			pass.Reportf(call.Lparen, "No. of args (%d) is less than no. of params (%d)", argLen, numParams)
 		}
 	}
 }
