@@ -224,3 +224,13 @@ func imports(pkg *types.Package, checkImports bool, paths ...string) bool {
 	}
 	return false
 }
+
+// stripVendor strips out the vendor path prefix
+func stripVendor(pkgPath string) string {
+	idx := strings.LastIndex(pkgPath, "vendor/")
+	if idx < 0 {
+		return pkgPath
+	}
+	// len("vendor/") == 7
+	return pkgPath[idx+7:]
+}
