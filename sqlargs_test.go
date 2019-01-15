@@ -1,18 +1,22 @@
-package sqlargs_test
+package sqlargs
 
 import (
 	"testing"
 
-	"github.com/agnivade/sqlargs"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
 func TestBasic(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, sqlargs.Analyzer, "basic") // loads testdata/src/basic
+	analysistest.Run(t, testdata, Analyzer, "basic") // loads testdata/src/basic
 }
 
 func TestEmbed(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, sqlargs.Analyzer, "embed")
+	analysistest.Run(t, testdata, Analyzer, "embed")
+}
+
+func TestSqlx(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, Analyzer, "sqlx")
 }
